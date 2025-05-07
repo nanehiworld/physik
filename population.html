@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Populationsdiagramm + Feigenbaum</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Populationsentwicklung</h1>
+  <label for="r">Wert für r:</label>
+  <input type="number" id="r" step="0.01" value="2.5">
+  <label for="x0">Startwert x₀:</label>
+  <input type="number" id="x0" step="0.01" value="0.1">
+  <label for="steps">Anzahl Schritte:</label>
+  <input type="number" id="steps" value="50">
+  <button onclick="generateCharts()">Diagramme erzeugen</button>
+
+  <h2>Populationsverlauf</h2>
+  <canvas id="chart" width="800" height="400"></canvas>
+
+  <h2>Feigenbaumdiagramm</h2>
+  <canvas id="feigenbaum" width="800" height="400"></canvas>
+
+  <script>
+    function generateCharts() {
+      const r = parseFloat(document.getElementById("r").value);
+      let x = parseFloat(document.getElementById("x0").value);
+      const steps = parseInt(document.getElementById("steps").value);
+
+      const labels = [];
+      const data = [];
+
+      for (let n = 0; n <= steps; n++) {
+        labels.push(n);
+        data.push(x);
+        x = r * x - r * x * x;
+      }
+
+      const ctx = document.getElementById("chart").getContext("2d");
+
+      if (window.myChart) window.myChart.destroy();
+
+      window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `r = ${r}`,
+            data: data,
+            borderColor: 'blue',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { title: { display: true, text: 'n (Zeitschritte)' } },
+            y: { title: { display: true, text: 'xₙ (Anzahl Tiere)' } }
+          }
+        }
+      });
+
+      // Feigenbaumdiagramm
+      const rMin = 2.5;
+      const rMax = 4.0;
+      const rSteps = 500;
+      const feigenbaumData = [];
+
+      for (let i = 0; i < rSteps; i++) {
+        const rValue = rMin + (rMax - rMin) * (i / rSteps);
+        let xVal = 0.5;
+
+        // Einige Werte überspringen (Einlaufzeit)
+        for (let j = 0; j < 100; j++) {
+          xVal = rValue * xVal - rValue * xVal * xVal;
+        }
+
+        // Letzte 100 Werte aufzeichnen
+        for (let j = 0; j < 100; j++) {
+          xVal = rValue * xVal - rValue * xVal * xVal;
+          feigenbaumData.push({ x: rValue, y: xVal });
+        }
+      }
+
+      const ctx2 = document.getElementById("feigenbaum").getContext("2d");
+
+      if (window.feigenbaumChart) window.feigenbaumChart.destroy();
+
+      window.feigenbaumChart = new Chart(ctx2, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Feigenbaumdiagramm',
+            data: feigenbaumData,
+            pointRadius: 0.5,
+            backgroundColor: 'black'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: {
+              type: 'linear',
+              title: { display: true, text: 'r' },
+              min: rMin,
+              max: rMax
+            },
+            y: {
+              title: { display: true, text: 'x' },
+              min: 0,
+              max: 1
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
